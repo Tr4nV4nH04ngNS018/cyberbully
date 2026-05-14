@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberGuard — Phát hiện Cyberbullying AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0a0c10;
+      --surface:  #111318;
+      --border:   #1e2330;
+      --accent:   #00e5ff;
+      --accent2:  #7c3aed;
+      --clean:    #00e676;
+      --warn:     #ffea00;
+      --danger:   #ff6d00;
+      --critical: #ff1744;
+      --text:     #e8eaf0;
+      --muted:    #5c6270;
+      --font-mono: 'Space Mono', monospace;
+      --font-body: 'Be Vietnam Pro', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── GRID BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative; z-index: 1;
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: .75rem;
+      font-family: var(--font-mono);
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .logo span { color: var(--text); }
+
+    .header-badge {
+      font-family: var(--font-mono);
+      font-size: .65rem; letter-spacing: .1em;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: .25rem .6rem; border-radius: 4px;
+      opacity: .7;
+    }
+
+    /* ── LAYOUT ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto;
+      padding: 3rem 1.5rem 4rem;
+    }
+
+    .hero {
+      text-align: center; margin-bottom: 3rem;
+    }
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: .7rem; letter-spacing: .15em;
+      color: var(--accent); text-transform: uppercase;
+      margin-bottom: .75rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800; line-height: 1.15;
+      background: linear-gradient(120deg, #fff 30%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .75rem;
+    }
+    .hero p {
+      color: var(--muted); font-size: .95rem; max-width: 520px; margin: 0 auto;
+    }
+
+    /* ── PROVIDER PILLS ── */
+    .provider-row {
+      display: flex; justify-content: center; gap: .5rem;
+      margin-bottom: 2.5rem; flex-wrap: wrap;
+    }
+    .provider-pill {
+      font-family: var(--font-mono); font-size: .7rem;
+      padding: .3rem .75rem; border-radius: 20px;
+      border: 1px solid var(--border); color: var(--muted);
+      cursor: default;
+    }
+    .provider-pill.active {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(0,229,255,.06);
+    }
+
+    /* ── INPUT CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title {
+      font-family: var(--font-mono); font-size: .75rem;
+      color: var(--muted); letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .char-counter {
+      font-family: var(--font-mono); font-size: .72rem; color: var(--muted);
+    }
+    .char-counter.warn { color: var(--warn); }
+
+    textarea {
+      width: 100%; min-height: 150px;
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-family: var(--font-body);
+      font-size: .95rem; line-height: 1.7;
+      padding: 1.25rem; resize: vertical;
+    }
+    textarea::placeholder { color: var(--muted); }
+
+    .card-footer {
+      padding: .75rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+
+    /* Sample buttons */
+    .samples { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .sample-btn {
+      font-size: .7rem; padding: .3rem .65rem;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); border-radius: 6px; cursor: pointer;
+      transition: all .2s;
+    }
+    .sample-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Analyze button */
+    .btn-analyze {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .65rem 1.5rem; border-radius: 8px; border: none; cursor: pointer;
+      font-family: var(--font-body); font-size: .9rem; font-weight: 600;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000; transition: opacity .2s, transform .15s;
+      white-space: nowrap;
+    }
+    .btn-analyze:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-analyze:active { transform: translateY(0); }
+    .btn-analyze:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* ── LOADING ── */
+    .loading {
+      display: none; align-items: center; justify-content: center;
+      gap: .75rem; padding: 2.5rem;
+      color: var(--muted); font-family: var(--font-mono); font-size: .8rem;
+    }
+    .loading.show { display: flex; }
+    .spinner {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESULT CARD ── */
+    #result { display: none; animation: fadeUp .4s ease; }
+    #result.show { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-bar {
+      height: 4px;
+      border-radius: 4px 4px 0 0;
+      transition: background .3s;
+    }
+    .status-bar.clean    { background: var(--clean); }
+    .status-bar.warning  { background: var(--warn); }
+    .status-bar.danger   { background: var(--danger); }
+    .status-bar.critical { background: var(--critical); }
+    .status-bar.error    { background: var(--muted); }
+
+    .result-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .status-badge {
+      font-family: var(--font-mono); font-size: .75rem; font-weight: 700;
+      padding: .35rem .8rem; border-radius: 6px; letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .status-badge.clean    { background: rgba(0,230,118,.15); color: var(--clean); border: 1px solid rgba(0,230,118,.3); }
+    .status-badge.warning  { background: rgba(255,234,0,.12); color: var(--warn); border: 1px solid rgba(255,234,0,.3); }
+    .status-badge.danger   { background: rgba(255,109,0,.12); color: var(--danger); border: 1px solid rgba(255,109,0,.3); }
+    .status-badge.critical { background: rgba(255,23,68,.12); color: var(--critical); border: 1px solid rgba(255,23,68,.3); }
+    .status-badge.error    { background: rgba(92,98,112,.15); color: var(--muted); border: 1px solid var(--border); }
+
+    .result-title {
+      font-weight: 700; font-size: 1.05rem; flex: 1;
+    }
+    .confidence-wrap {
+      display: flex; align-items: center; gap: .5rem;
+      font-family: var(--font-mono); font-size: .75rem; color: var(--muted);
+    }
+    .confidence-bar-bg {
+      width: 80px; height: 6px; background: var(--border); border-radius: 3px;
+    }
+    .confidence-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width .6s ease;
+    }
+
+    .result-body { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    /* Explanation */
+    .explanation-box {
+      padding: 1rem 1.1rem;
+      background: rgba(255,255,255,.03);
+      border-left: 3px solid var(--accent2);
+      border-radius: 0 8px 8px 0;
+      font-size: .9rem; line-height: 1.7; color: #b0b8cc;
+    }
+
+    /* Violations list */
+    .section-label {
+      font-family: var(--font-mono); font-size: .68rem;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: .6rem;
+    }
+
+    .violation-list { display: flex; flex-direction: column; gap: .5rem; }
+    .violation-item {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .65rem .9rem;
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: .85rem;
+    }
+    .viol-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .viol-dot.high    { background: var(--critical); box-shadow: 0 0 6px var(--critical); }
+    .viol-dot.medium  { background: var(--danger);   box-shadow: 0 0 6px var(--danger); }
+    .viol-dot.low     { background: var(--warn);     box-shadow: 0 0 6px var(--warn); }
+    .viol-label { font-weight: 600; flex: 1; }
+    .viol-content {
+      font-family: var(--font-mono); font-size: .72rem;
+      color: var(--muted); max-width: 200px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .viol-severity-tag {
+      font-family: var(--font-mono); font-size: .65rem;
+      padding: .2rem .5rem; border-radius: 4px; text-transform: uppercase;
+    }
+    .viol-severity-tag.high    { background: rgba(255,23,68,.15); color: var(--critical); }
+    .viol-severity-tag.medium  { background: rgba(255,109,0,.15); color: var(--danger); }
+    .viol-severity-tag.low     { background: rgba(255,234,0,.12); color: var(--warn); }
+
+    /* Suggestion */
+    .suggestion-box {
+      display: flex; align-items: flex-start; gap: .75rem;
+      padding: .9rem 1rem;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: rgba(255,255,255,.02);
+    }
+    .sug-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .sug-text { font-size: .88rem; color: #9aa0b0; line-height: 1.6; }
+
+    /* Meta row */
+    .meta-row {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      padding-top: 1rem; border-top: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: .7rem; color: var(--muted);
+    }
+    .meta-item strong { color: var(--text); }
+
+    /* ── STATS BAR ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.1rem 1.25rem; text-align: center;
+    }
+    .stat-num {
+      font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700;
+      color: var(--accent); display: block;
+    }
+    .stat-lbl { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
+
+    /* ── RETRY BTN ── */
+    .btn-retry {
+      display: inline-flex; align-items: center; gap: .4rem;
+      margin-top: .75rem; padding: .5rem 1.2rem; border-radius: 8px;
+      border: 1px solid var(--accent); background: rgba(0,229,255,.08);
+      color: var(--accent); font-family: var(--font-body);
+      font-size: .82rem; font-weight: 600; cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-retry:hover { background: rgba(0,229,255,.18); transform: translateY(-1px); }
+
+    .error-detail {
+      white-space: pre-line; line-height: 1.8;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 2rem; right: 1.5rem; z-index: 100;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: .85rem 1.2rem;
+      font-size: .85rem; max-width: 300px;
+      opacity: 0; transform: translateY(8px);
+      transition: all .3s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .card-footer { flex-direction: column; align-items: stretch; }
+      .btn-analyze { justify-content: center; }
+    }
+
+    /* ── MODAL HƯỚNG DẪN ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(10, 12, 16, 0.85);
+      backdrop-filter: blur(8px); z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: auto; }
+    
+    .modal-content {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; width: 90%; max-width: 600px;
+      max-height: 85vh; overflow-y: auto;
+      transform: translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .modal-overlay.show .modal-content { transform: translateY(0); }
+    
+    .modal-header {
+      padding: 1.5rem 2rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; background: rgba(17, 19, 24, 0.95);
+      backdrop-filter: blur(4px); z-index: 10;
+    }
+    .modal-header h2 { font-size: 1.25rem; display: flex; align-items: center; gap: .75rem; }
+    .btn-close {
+      background: transparent; border: none; color: var(--muted);
+      cursor: pointer; font-size: 1.5rem; line-height: 1; padding: .5rem;
+      border-radius: 8px; transition: all .2s;
+    }
+    .btn-close:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    
+    .modal-body { padding: 2rem; }
+    .guide-step { margin-bottom: 1.5rem; display: flex; gap: 1rem; }
+    .step-num {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: rgba(0,229,255,0.1); color: var(--accent);
+      border: 1px solid rgba(0,229,255,0.2); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: .85rem; font-weight: bold;
+    }
+    .step-content h3 { font-size: 1.05rem; margin-bottom: .5rem; color: #fff; }
+    .step-content p { color: var(--muted); font-size: .95rem; line-height: 1.6; }
+    .step-content strong { color: var(--text); }
+    
+    .btn-guide {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      color: var(--text); padding: .4rem .8rem; border-radius: 6px;
+      font-size: .85rem; cursor: pointer; display: flex; align-items: center; gap: .5rem;
+      transition: all .2s; margin-right: 1rem;
+    }
+    .btn-guide:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+    .header-actions { display: flex; align-items: center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    Cyber<span>Guard</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn-guide" onclick="openGuide()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      Hướng dẫn
+    </button>
+    <div class="header-badge">AI-POWERED v2.0</div>
+  </div>
+</header>
+
+<main>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-label">// Hệ thống kiểm duyệt nội dung</div>
+    <h1>Phát hiện Cyberbullying<br>bằng Trí tuệ Nhân tạo</h1>
+    <p>Phân tích ngữ cảnh chuyên sâu, vượt qua giới hạn của từ khóa thông thường</p>
+  </div>
+
+  <!-- Provider indicator -->
+  <div class="provider-row" id="providerRow">
+    <div class="provider-pill" id="pill-claude">◆ Claude (Anthropic)</div>
+    <div class="provider-pill" id="pill-openai">◆ GPT-4o (OpenAI)</div>
+    <div class="provider-pill" id="pill-gemini">◆ Gemini (Google)</div>
+    <div class="provider-pill" id="pill-groq">◆ Llama 3 (Groq)</div>
+    <div class="provider-pill" id="pill-openrouter">◆ OpenRouter (Free)</div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">// Nhập văn bản cần kiểm tra</span>
+      <span class="char-counter" id="charCount">0 / 5000</span>
+    </div>
+    <textarea id="inputText"
+      placeholder="Dán nội dung bình luận, tin nhắn hoặc bài đăng cần phân tích vào đây..."
+      maxlength="5000"></textarea>
+    <div class="card-footer">
+      <div class="samples">
+        <span style="font-size:.7rem;color:var(--muted);align-self:center">Thử ngay:</span>
+        <button class="sample-btn" onclick="loadSample('clean')">✅ Bình thường</button>
+        <button class="sample-btn" onclick="loadSample('medium')">⚠️ Xúc phạm</button>
+        <button class="sample-btn" onclick="loadSample('critical')">🚨 Nghiêm trọng</button>
+      </div>
+      <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        Phân tích ngay
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>AI đang phân tích văn bản…</span>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="result">
+    <div class="status-bar" id="statusBar"></div>
+    <div class="result-header">
+      <span class="status-badge" id="statusBadge"></span>
+      <span class="result-title" id="resultTitle"></span>
+      <div class="confidence-wrap">
+        <span id="confidenceText">0%</span>
+        <div class="confidence-bar-bg">
+          <div class="confidence-bar-fill" id="confidenceFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="result-body">
+      <!-- Explanation -->
+      <div>
+        <div class="section-label">// Phân tích AI</div>
+        <div class="explanation-box" id="explanationBox"></div>
+      </div>
+      <!-- Violations -->
+      <div id="violationSection">
+        <div class="section-label">// Chi tiết vi phạm</div>
+        <div class="violation-list" id="violationList"></div>
+      </div>
+      <!-- Suggestion -->
+      <div class="suggestion-box">
+        <span class="sug-icon">💡</span>
+        <span class="sug-text" id="suggestionText"></span>
+      </div>
+      <!-- Meta -->
+      <div class="meta-row">
+        <span>Thời gian: <strong id="metaTime">—</strong></span>
+        <span>Provider: <strong id="metaProvider">—</strong></span>
+        <span>Vi phạm: <strong id="metaCount">—</strong></span>
+        <span>Mức độ: <strong id="metaSeverity">—</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-num" id="statTotal">0</span>
+      <div class="stat-lbl">Tổng phân tích</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statViolations" style="color:var(--critical)">0</span>
+      <div class="stat-lbl">Vi phạm phát hiện</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statClean" style="color:var(--clean)">0</span>
+      <div class="stat-lbl">Nội dung sạch</div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<!-- Hướng dẫn Modal -->
+<div class="modal-overlay" id="guideModal" onclick="if(event.target===this) closeGuide()">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2><span>📚</span> Hướng dẫn sử dụng</h2>
+      <button class="btn-close" onclick="closeGuide()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="guide-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>Nhập văn bản cần kiểm tra</h3>
+          <p>Dán đoạn văn bản, bình luận hoặc tin nhắn vào khung soạn thảo. Hệ thống hỗ trợ lên đến <strong>5000 ký tự</strong>.</p>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>Sử dụng mẫu thử (Tùy chọn)</h3>
+          <p>Nhấp vào các nút <strong>"✅ Bình thường"</strong>, <strong>"⚠️ Xúc phạm"</strong> hoặc <strong>"🚨 Nghiêm trọng"</strong> để tải nhanh các mẫu văn bản và trải nghiệm cách AI phản hồi.</p>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Thực hiện phân tích</h3>
+          <p>Nhấn <strong>"Phân tích ngay"</strong> (hoặc nhấn <code>Ctrl + Enter</code>). AI sẽ quét ngữ cảnh, từ lóng và ẩn ý để đưa ra đánh giá chính xác nhất.</p>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Đọc báo cáo kết quả</h3>
+          <p>Kết quả sẽ hiển thị theo mức độ: <span style="color:var(--clean)">Clean</span>, <span style="color:var(--warn)">Warning</span>, <span style="color:var(--danger)">Danger</span> hoặc <span style="color:var(--critical)">Critical</span>. Kéo xuống để xem chi tiết các vi phạm và lời khuyên xử lý cụ thể.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Modal Logic
+  function openGuide() {
+    document.getElementById('guideModal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeGuide() {
+    document.getElementById('guideModal').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  // --- API LOGIC ---
+  const SAMPLES = {
+    clean: "Hôm nay trời đẹp quá, mình đi dạo công viên và gặp nhiều người thân thiện. Cuộc sống thật tuyệt vời!",
+    medium: "Mày nghĩ mày giỏi lắm hả? Không ai thích mày đâu, cút đi cho rồi, vô dụng thật sự.",
+    critical: "Tao sẽ giết mày nếu mày còn tiếp tục. Đồ chó, mày là rác của xã hội, chết đi cho thiên hạ nhờ."
+  };
+
+  // Escape HTML to prevent XSS
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  const STATUS_LABELS = {
+    clean: "✅ Nội dung sạch", warning: "⚠️ Cần chú ý",
+    danger: "🚨 Có dấu hiệu bắt nạt", critical: "🔴 Vi phạm nghiêm trọng",
+    error: "❌ Lỗi hệ thống"
+  };
+
+  // Char counter
+  const textarea = document.getElementById('inputText');
+  const charCount = document.getElementById('charCount');
+  textarea.addEventListener('input', () => {
+    const n = textarea.value.length;
+    charCount.textContent = `${n} / 5000`;
+    charCount.className = 'char-counter' + (n > 4500 ? ' warn' : '');
+  });
+
+  function loadSample(type) {
+    textarea.value = SAMPLES[type];
+    textarea.dispatchEvent(new Event('input'));
+  }
+
+  function toast(msg, dur = 3000) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), dur);
+  }
+
+  let _lastAnalyzeTime = 0;
+  async function analyze() {
+    const text = textarea.value.trim();
+    if (!text) { toast('⚠️ Vui lòng nhập văn bản cần phân tích.'); return; }
+
+    // Rate limit client-side: 3 giây giữa các lần gọi
+    const now = Date.now();
+    if (now - _lastAnalyzeTime < 3000) {
+      toast('⏳ Vui lòng đợi vài giây trước khi phân tích tiếp.'); return;
+    }
+    _lastAnalyzeTime = now;
+
+    const btn = document.getElementById('analyzeBtn');
+    const loading = document.getElementById('loading');
+    const result = document.getElementById('result');
+
+    btn.disabled = true;
+    loading.classList.add('show');
+    result.classList.remove('show');
+
+    try {
+      const res = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Lỗi máy chủ');
+      renderResult(data);
+      updateStats();
+    } catch (err) {
+      toast('❌ ' + (err.message || 'Không thể kết nối máy chủ'));
+    } finally {
+      btn.disabled = false;
+      loading.classList.remove('show');
+    }
+  }
+
+  function renderResult(d) {
+    const status = d.status || 'error';
+
+    // Status bar
+    document.getElementById('statusBar').className = `status-bar ${status}`;
+
+    // Badge + title
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = status.toUpperCase();
+    badge.className = `status-badge ${status}`;
+    document.getElementById('resultTitle').textContent = STATUS_LABELS[status] || status;
+
+    // Confidence
+    const pct = Math.round((d.confidence || 0) * 100);
+    document.getElementById('confidenceText').textContent = pct + '%';
+    document.getElementById('confidenceFill').style.width = pct + '%';
+
+    // Explanation
+    const expBox = document.getElementById('explanationBox');
+    expBox.textContent = d.explanation || d.suggestion || '—';
+    expBox.className = 'explanation-box' + (status === 'error' ? ' error-detail' : '');
+
+    // Show retry button for errors
+    let retryBtn = document.getElementById('retryBtn');
+    if (retryBtn) retryBtn.remove();
+    if (status === 'error') {
+      retryBtn = document.createElement('button');
+      retryBtn.id = 'retryBtn';
+      retryBtn.className = 'btn-retry';
+      retryBtn.innerHTML = '🔄 Thử lại';
+      retryBtn.onclick = () => { _lastAnalyzeTime = 0; analyze(); };
+      expBox.after(retryBtn);
+    }
+
+    // Violations
+    const list = document.getElementById('violationList');
+    const section = document.getElementById('violationSection');
+    const viols = d.violations || [];
+    if (viols.length === 0) {
+      section.style.display = 'none';
+    } else {
+      section.style.display = '';
+      list.innerHTML = viols.map(v => `
+        <div class="violation-item">
+          <div class="viol-dot ${esc(v.severity)}"></div>
+          <span class="viol-label">${esc(v.label || v.type)}</span>
+          <span class="viol-content">${esc(v.content || '')}</span>
+          <span class="viol-severity-tag ${esc(v.severity)}">${esc(v.severity)}</span>
+        </div>`).join('');
+    }
+
+    // Suggestion
+    document.getElementById('suggestionText').textContent = d.suggestion || '—';
+
+    // Meta
+    document.getElementById('metaTime').textContent = d.timestamp || '—';
+    document.getElementById('metaProvider').textContent = (d.provider || 'unknown').toUpperCase();
+    document.getElementById('metaCount').textContent = d.violation_count ?? '—';
+    document.getElementById('metaSeverity').textContent = (d.severity || '—').toUpperCase();
+
+    document.getElementById('result').classList.add('show');
+  }
+
+  async function updateStats() {
+    try {
+      const res = await fetch('/stats');
+      const data = await res.json();
+      const s = data.statistics;
+      document.getElementById('statTotal').textContent = s.total || 0;
+      document.getElementById('statViolations').textContent = s.violations || 0;
+      document.getElementById('statClean').textContent = s.clean || 0;
+
+      // Mark active provider
+      ['claude','openai','gemini','groq','openrouter'].forEach(p => {
+        const el = document.getElementById(`pill-${p}`);
+        if (el) el.className = 'provider-pill' + (data.provider === p ? ' active' : '');
+      });
+    } catch {}
+  }
+
+  // Init
+  updateStats();
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyze();
+  });
+</script>
+</body>
+</html>
